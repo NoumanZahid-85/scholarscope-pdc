@@ -8,8 +8,9 @@ services:
     environment:
       ROLE: master
       IMAGE_DIGEST: sha256:785c953248ef74a6abee448d1bcb4cb9b120cd5bf7d2789ab55af8aa2a6ee081
-      # MPI over the VPC network only (not docker0); 172.31.0.0/16 = the default VPC
-      MPIRUN_ARGS: "--mca btl_tcp_if_include 172.31.0.0/16 --mca oob_tcp_if_include 172.31.0.0/16"
+      # MPI over the VPC network only (not docker0); 172.31.0.0/16 = the default VPC.
+      # --bind-to none: with <= 2 ranks OpenMPI pins each rank to ONE core, so its OpenMP threads would share that core.
+      MPIRUN_ARGS: "--bind-to none --mca btl_tcp_if_include 172.31.0.0/16 --mca oob_tcp_if_include 172.31.0.0/16"
     volumes:
       - /data:/data
       - /home/ubuntu/mpi-ssh:/home/mpiuser/.ssh
