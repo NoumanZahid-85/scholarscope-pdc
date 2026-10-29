@@ -1,0 +1,8 @@
+# Development image (laptop only): same Ubuntu + packages as the final image, without ssh setup or the server.
+FROM ubuntu:22.04
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        g++ openmpi-bin libopenmpi-dev zlib1g-dev openssh-server openssh-client python3 curl ca-certificates procps time \
+    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -s /bin/bash mpiuser
+USER mpiuser
+WORKDIR /work
