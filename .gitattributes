@@ -1,0 +1,3 @@
+# Keep LF line endings everywhere: these files run on Linux (bash, Docker, compose); CRLF breaks shell scripts.
+* text=auto eol=lf
+*.png binary

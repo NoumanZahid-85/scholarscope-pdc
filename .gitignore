@@ -1,0 +1,27 @@
+# (gitignore has no end-of-line comments: every comment is on its own line)
+
+# ---- secrets: NEVER commit ----
+# EC2 key pair (key1.pem) = full access to the instances
+*.pem
+# mpiuser's private ssh key for the cluster, and any other ssh key
+mpi-ssh/
+id_*
+.env
+.aws/
+
+# ---- personal / private material ----
+# private kit: roll, my shard list, my settings, canary
+config.json
+settings.txt
+canary.jsonl
+# course material from the instructor (every student has it in their kit)
+Assignment-1.pdf
+server.py
+
+# ---- data and build output ----
+data/
+engine/engine
+__pycache__/
+*.pyc
+*.err
+logs/
