@@ -1,0 +1,55 @@
+# LAPTOP rehearsal of the 3-node cluster: 3 containers from the real image on a private network, each with its own
+# /data volume (like 3 separate EC2 disks) and one shared ssh key volume. Not for EC2 (EC2 uses deploy/).
+#   docker build -t pdc-scholar .      then, in this folder:   docker compose up -d      → http://localhost:8000
+x-node: &node
+  image: pdc-scholar
+  depends_on: { init: { condition: service_completed_successfully } }
+
+services:
+  init:                       # one-shot: ssh key pair + kit files + shards into each node's /data, hosts file on master
+    image: pdc-scholar
+    user: root
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -e
+        [ -f /k/id_ed25519 ] || ssh-keygen -q -t ed25519 -N '' -f /k/id_ed25519
+        cp /k/id_ed25519.pub /k/authorized_keys
+        for d in /d0 /d1 /d2; do
+          mkdir -p $$d/shards
+          cp /src/config.json /src/settings.txt /src/canary.jsonl $$d/
+          cp -u /src/shards/*.jsonl.gz $$d/shards/
+        done
+        printf '10.5.0.11 slots=4\n10.5.0.12 slots=4\n10.5.0.13 slots=4\n' > /d0/hosts
+        chown -R 1000:1000 /k /d0 /d1 /d2
+    volumes: ["../data:/src:ro", "keys:/k", "data0:/d0", "data1:/d1", "data2:/d2"]
+
+  master:
+    <<: *node
+    container_name: lc-master
+    hostname: lc-master
+    environment:
+      ROLE: master
+      IMAGE_DIGEST: local
+      MPIRUN_ARGS: "--mca btl_tcp_if_include 10.5.0.0/24 --mca oob_tcp_if_include 10.5.0.0/24"
+    ports: ["8000:8000"]
+    volumes: ["data0:/data", "keys:/home/mpiuser/.ssh"]
+    networks: { net: { ipv4_address: 10.5.0.11 } }
+  w1:
+    <<: *node
+    container_name: lc-w1
+    hostname: lc-w1
+    environment: { ROLE: worker }
+    volumes: ["data1:/data", "keys:/home/mpiuser/.ssh"]
+    networks: { net: { ipv4_address: 10.5.0.12 } }
+  w2:
+    <<: *node
+    container_name: lc-w2
+    hostname: lc-w2
+    environment: { ROLE: worker }
+    volumes: ["data2:/data", "keys:/home/mpiuser/.ssh"]
+    networks: { net: { ipv4_address: 10.5.0.13 } }
+
+networks:
+  net: { ipam: { config: [{ subnet: 10.5.0.0/24 }] } }
+volumes: { keys: {}, data0: {}, data1: {}, data2: {} }
