@@ -1,0 +1,13 @@
+# EC2 WORKER node (w1 and w2 use this same file). Same image as the master; only ROLE differs. Start: docker compose up -d
+services:
+  scholar:
+    image: noumandockeruser65/pdc-scholar@sha256:785c953248ef74a6abee448d1bcb4cb9b120cd5bf7d2789ab55af8aa2a6ee081
+    container_name: scholar
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      ROLE: worker
+      IMAGE_DIGEST: sha256:785c953248ef74a6abee448d1bcb4cb9b120cd5bf7d2789ab55af8aa2a6ee081
+    volumes:
+      - /data:/data
+      - /home/ubuntu/mpi-ssh:/home/mpiuser/.ssh
